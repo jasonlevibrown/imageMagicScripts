@@ -1,10 +1,10 @@
 #Update to your path
-$global:magickExePath = "C:\Program Files\ImageMagick-7.1.0-Q16-HDRI\magick.exe"
-$global:output_original = "$location\original"
-$global:output_1100px = "$location\1100px"
-$global:output_800px = "$location\800px"
-$global:output_550px = "$location\550px"
-$global:imageObject = [PSCustomObject]@{
+$script:magickExePath = "C:\Program Files\ImageMagick-7.1.0-Q16-HDRI\magick.exe"
+$script:output_original = "$location\original"
+$script:output_1100px = "$location\1100px"
+$script:output_800px = "$location\800px"
+$script:output_550px = "$location\550px"
+$script:imageObject = [PSCustomObject]@{
     PSTypeName = 'CustomJpgImageObject'
     File    = ''
     Width   = 0
@@ -30,13 +30,6 @@ function convertToMobile() {
         if ($jpgObjectWithDimensions.NeedsToBeResized -contains "true") {
             generateResizedImagesAndSave($jpgObjectWithDimensions)
         }
-
-        if ($jpgObjectWithDimensions.NeedsToBeResized -contains "false") {
-            generateResizedImagesAndSave($jpgObjectWithDimensions)
-        }
-
-        $arguments = 'convert','-scale','500x500','-extent','110%x110%','-gravity','center','-background','transparent',$svgQuoted,$pngPath
-        & $magickExePath $arguments
     }
 }
 
@@ -59,7 +52,7 @@ function getImageDimensionsInPixels($jpgObject) {
     return $jpgObject
 }
 
-function determineIfImageNeedsToBeResized($jpgObject) {
+function determineIfImageNeedsToBeResized($jpgObjectWithDimensions) {
     if ($jpgObject.Width -gt 1100) {
         $jpgObject.ResizeTo1100 = 'true'
         $jpgObject.ResizeTo800 = 'true'
@@ -87,18 +80,32 @@ function determineIfImageNeedsToBeResized($jpgObject) {
     }
 }
 
-function generateResizedImagesAndSave($imageNeedsToBeResizedResult, $jpg) {
-    Write-Host "Resize object here"
+function generateResizedImagesAndSave($jpgObjectWithDimensions) {
+    
+    if ($jpgObjectWithDimensions.ResizeTo1100 -eq 'true') {
+        $result = resize $jpgObjectWithDimensions.File 1100
+    }
+    if ($jpgObjectWithDimensions.ResizeTo800 -eq 'true') {
+        
+    }
+    if ($jpgObjectWithDimensions.ResizeTo550 -eq 'true') {
+        
+    }    
 }
 
-<#
-function getImageData($jpg) {
-    Write-Host "Getting image data."
-    $arguments = 'identify', '-format', '"%wx%h"', $jpg
-    Write-Host $magickExePath $arguments 
-    $results = & $magickExePath $arguments 
-    Write-Host $results
+
+function resize($jpg, $width) {
+    $arguments = 'convert','-resize', $width, $jpg
+    $currentDirectory = ((Get-Item $jpg).Directory)
+    $targetResizeDirectory = "$currentDirectory\$width"
+    $targetResizeDirectoryExists = $targetResizeDirectory | Test-Path
+    if (!$targetResizeDirectoryExists) {
+        New-Item -Path $targetResizeDirectory -ItemType 'Directory'
+    }
+    <#No Images defined result#>
+    $resizeResult = & $magickExePath $arguments
+    return $resizeResult
 }
-#>
+
 
 convertToMobile
