@@ -1,10 +1,10 @@
 #Update to your path
-$script:magickExePath = "C:\Program Files\ImageMagick-7.1.0-Q16-HDRI\magick.exe"
-$script:output_original = "$location\original"
-$script:output_1100px = "$location\1100px"
-$script:output_800px = "$location\800px"
-$script:output_550px = "$location\550px"
-$script:imageObject = [PSCustomObject]@{
+$global:magickExePath = "C:\Program Files\ImageMagick-7.1.0-Q16-HDRI\magick.exe"
+$global:output_original = "$location\original"
+$global:output_1100px = "$location\1100px"
+$global:output_800px = "$location\800px"
+$global:output_550px = "$location\550px"
+$global:imageObject = [PSCustomObject]@{
     PSTypeName = 'CustomJpgImageObject'
     File    = ''
     Width   = 0
@@ -16,8 +16,7 @@ $script:imageObject = [PSCustomObject]@{
 }
 
 function convertToMobile() {
-    #add param to pass in location
-
+    $location = Get-Location
     $originalJpgFiles = Get-ChildItem (".\*") -Filter *.jpg
     
     ForEach($jpg in $originalJpgFiles) {
@@ -25,15 +24,15 @@ function convertToMobile() {
         $jpgObject.File = $jpg
 
         $jpgObjectWithDimensions = getImageDimensionsInPixels($jpgObject)
-        $jpgObjectWithDimensions = determineIfImageNeedsToBeResized($jpgObject)
+        $jpgObjectWithDimensions = determineIfImageNeedsToBeResized($jpgObjectWithDimensions)
 
 
-        if ($jpgObject.NeedsToBeResized -contains "true") {
-            generateResizedImagesAndSave($jpgObject)
+        if ($jpgObjectWithDimensions.NeedsToBeResized -contains "true") {
+            generateResizedImagesAndSave($jpgObjectWithDimensions)
         }
 
-        if ($jpgObject.NeedsToBeResized -contains "false") {
-            generateResizedImagesAndSave($jpgObject)
+        if ($jpgObjectWithDimensions.NeedsToBeResized -contains "false") {
+            generateResizedImagesAndSave($jpgObjectWithDimensions)
         }
 
         $arguments = 'convert','-scale','500x500','-extent','110%x110%','-gravity','center','-background','transparent',$svgQuoted,$pngPath
@@ -57,7 +56,7 @@ function getImageDimensionsInPixels($jpgObject) {
     $arguments = 'identify', '-format', '"%h"', $jpgObject.File
     $jpgObject.Height = & $magickExePath $arguments 
 
-    return $results
+    return $jpgObject
 }
 
 function determineIfImageNeedsToBeResized($jpgObject) {
